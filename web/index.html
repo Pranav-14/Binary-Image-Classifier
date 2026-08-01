@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoVision - AI Urban Sanitation Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glow glow-1"></div>
+    <div class="background-glow glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header Section -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="brand-icon">🌱</div>
+                <div class="brand-text">
+                    <h1>EcoVision <span>AI</span></h1>
+                    <p>Urban Sanitation & Environmental Intelligence</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <span class="pulse-dot"></span>
+                <span id="backend-status">Model Ready (PyTorch/ONNX)</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="grid-layout">
+            <!-- Left Panel: Input Section -->
+            <section class="card input-card">
+                <div class="card-header">
+                    <h2>Image Source</h2>
+                    <p>Upload an environmental photo or select a sample image</p>
+                </div>
+
+                <!-- Drag and Drop Zone -->
+                <div class="drop-zone" id="drop-zone">
+                    <input type="file" id="file-input" accept="image/*" class="file-input">
+                    <div class="drop-content" id="drop-content">
+                        <div class="upload-icon">📸</div>
+                        <p class="drop-title">Drag & Drop image here</p>
+                        <p class="drop-subtitle">or click to browse files (JPEG, PNG, WEBP)</p>
+                    </div>
+                    <img id="image-preview" class="image-preview hidden" alt="Uploaded Preview">
+                </div>
+
+                <!-- Action Controls -->
+                <div class="action-bar">
+                    <button class="btn btn-primary" id="analyze-btn" disabled>
+                        <span>Run AI Inference</span>
+                    </button>
+                    <button class="btn btn-secondary" id="clear-btn">Clear</button>
+                </div>
+
+                <!-- Presets / Quick Test -->
+                <div class="sample-presets">
+                    <span class="preset-label">Test Samples:</span>
+                    <div class="preset-pills">
+                        <button class="pill" data-sample="clean1">✨ Clean Street</button>
+                        <button class="pill" data-sample="garbage1">🗑️ Litter Spot</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Inference Results -->
+            <section class="card output-card">
+                <div class="card-header">
+                    <h2>AI Classification Result</h2>
+                    <p>Real-time machine learning prediction & analytics</p>
+                </div>
+
+                <div class="result-body" id="result-body">
+                    <!-- Idle State -->
+                    <div class="idle-state" id="idle-state">
+                        <div class="idle-icon">📊</div>
+                        <h3>No Image Analyzed Yet</h3>
+                        <p>Upload a photo or select a test sample to view confidence score & class predictions.</p>
+                    </div>
+
+                    <!-- Result Display -->
+                    <div class="prediction-container hidden" id="prediction-container">
+                        <div class="badge-row">
+                            <span class="status-badge" id="status-badge">Analyzing...</span>
+                            <span class="backend-tag" id="backend-tag">ONNX Runtime</span>
+                        </div>
+
+                        <div class="primary-result">
+                            <h3 id="class-title">Clean Environment</h3>
+                            <p class="result-subtitle" id="result-desc">High probability of clean public area</p>
+                        </div>
+
+                        <!-- Confidence Gauge Bar -->
+                        <div class="gauge-section">
+                            <div class="gauge-header">
+                                <span>Confidence Level</span>
+                                <span id="confidence-percentage" class="percentage-val">0%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progress-fill"></div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Metrics Table -->
+                        <div class="metrics-grid">
+                            <div class="metric-box">
+                                <span class="metric-label">Raw Sigmoid Prob</span>
+                                <span class="metric-val" id="metric-prob">0.000</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="metric-label">Class ID</span>
+                                <span class="metric-val" id="metric-class-id">0</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="metric-label">Threshold</span>
+                                <span class="metric-val">0.50</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Binary Image Classifier • Powered by PyTorch & ONNX • Open Source AI for Clean Communities</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
