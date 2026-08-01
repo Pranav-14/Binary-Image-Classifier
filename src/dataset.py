@@ -53,3 +53,20 @@ def preprocess_image(image_input, target_size=config.IMG_SIZE):
         "batch_tf": batch_tf,
         "batch_pt": batch_pt
     }
+
+if __name__ == "__main__":
+    print("=== Dataset Module Test Run ===")
+    sample_dir = config.SAMPLES_DIR
+    if os.path.exists(sample_dir):
+        samples = [f for f in os.listdir(sample_dir) if f.lower().endswith(VALID_EXTENSIONS)]
+        if samples:
+            test_path = os.path.join(sample_dir, samples[0])
+            print(f"Testing preprocess_image on sample: {samples[0]}")
+            output = preprocess_image(test_path)
+            print(f"Raw RGB array shape: {output['raw_rgb'].shape}")
+            print(f"TF Tensor batch shape: {output['batch_tf'].shape}")
+            print(f"PyTorch Tensor batch shape: {output['batch_pt'].shape}")
+            print(f"Pixel normalization min: {output['batch_tf'].min()}, max: {output['batch_tf'].max()}")
+    
+    corrupted = clean_corrupted_images()
+    print(f"Corrupted images check complete. Total corrupted found: {len(corrupted)}")

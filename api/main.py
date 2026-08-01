@@ -50,8 +50,16 @@ async def predict_single(file: UploadFile = File(...)):
         contents = await file.read()
         image = Image.open(io.BytesIO(contents))
         result = predictor.predict(image)
-        result["filename"] = file.filename
-        return JSONResponse(content=result)
+        # Ensure all fields are standard python types for JSON serialization
+        response_data = {
+            "label": str(result["label"]),
+            "class_id": int(result["class_id"]),
+            "raw_probability": float(result["raw_probability"]),
+            "confidence": float(result["confidence"]),
+            "status": str(result["status"]),
+            "filename": file.filename
+        }
+        return JSONResponse(content=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
@@ -63,8 +71,14 @@ async def predict_batch(files: List[UploadFile] = File(...)):
             contents = await file.read()
             image = Image.open(io.BytesIO(contents))
             res = predictor.predict(image)
-            res["filename"] = file.filename
-            results.append(res)
+            results.append({
+                "label": str(res["label"]),
+                "class_id": int(res["class_id"]),
+                "raw_probability": float(res["raw_probability"]),
+                "confidence": float(res["confidence"]),
+                "status": str(res["status"]),
+                "filename": file.filename
+            })
     return {"total_processed": len(results), "results": results}
 
 @app.get("/samples")
@@ -75,19 +89,11 @@ def list_samples():
     files = [f for f in os.listdir(samples_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
     return {"samples": files}
 
-# Mount static web UI files if present
+# Mount static web UI directory at root /
 WEB_DIR = os.path.join(BASE_DIR, "web")
 if os.path.exists(WEB_DIR):
-    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
-
-    @app.get("/", response_class=HTMLResponse)
-    def serve_ui():
-        index_file = os.path.join(WEB_DIR, "index.html")
-        if os.path.exists(index_file):
-            with open(index_file, "r", encoding="utf-8") as f:
-                return HTMLResponse(content=f.read())
-        return HTMLResponse(content="<h1>Binary Image Classifier API is Running</h1><p>Visit <a href='/docs'>/docs</a> for Swagger API UI.</p>")
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
