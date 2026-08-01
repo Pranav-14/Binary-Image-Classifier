@@ -1,43 +1,47 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torchvision.models as models
 
-class BinaryClassifierCNN(nn.Module):
+class TransferLearningClassifier(nn.Module):
     """
-    Lightweight 3-Layer Convolutional Neural Network for Binary Classification
+    High-Performance PyTorch Transfer Learning Model for Binary Image Classification
+    Base Architecture: MobileNetV3-Small pre-trained on ImageNet.
     Input: (B, 3, 256, 256)
-    Output: Sigmoid probability [0.0 - 1.0] (0: Clean, 1: Garbage/Litter)
+    Output: Sigmoid Class Probability [0.0 - 1.0] (0: Clean, 1: Garbage / Litter)
     """
-    def __init__(self):
-        super(BinaryClassifierCNN, self).__init__()
-        
-        # Conv Block 1
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        
-        # Conv Block 2
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        
-        # Conv Block 3
-        self.conv3 = nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, padding=1)
-        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
-        
-        # Feature dimension after 3 poolings of 256x256: 256 -> 128 -> 64 -> 32
-        self.fc1 = nn.Linear(16 * 32 * 32, 256)
-        self.dropout = nn.Dropout(0.3)
-        self.fc2 = nn.Linear(256, 1)
+    def __init__(self, pretrained=True):
+        super(TransferLearningClassifier, self).__init__()
+        try:
+            weights = models.MobileNet_V3_Small_Weights.DEFAULT if pretrained else None
+            backbone = models.mobilenet_v3_small(weights=weights)
+            in_features = backbone.classifier[0].in_features
+            backbone.classifier = nn.Sequential(
+                nn.Linear(in_features, 1024),
+                nn.Hardswish(),
+                nn.Dropout(p=0.2, inplace=True),
+                nn.Linear(1024, 1)
+            )
+            self.model = backbone
+            self.architecture = "MobileNetV3-TransferLearning"
+        except Exception as e:
+            # Fallback to custom ResNet-like lightweight CNN
+            self.model = self._build_custom_cnn()
+            self.architecture = "Custom-Lightweight-CNN"
+
+    def _build_custom_cnn(self):
+        return nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1), nn.BatchNorm2d(128), nn.ReLU(), nn.MaxPool2d(2),
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(128, 64), nn.ReLU(), nn.Dropout(0.3),
+            nn.Linear(64, 1)
+        )
 
     def forward(self, x):
-        x = self.pool1(F.relu(self.conv1(x)))
-        x = self.pool2(F.relu(self.conv2(x)))
-        x = self.pool3(F.relu(self.conv3(x)))
-        
-        x = x.view(x.size(0), -1) # Flatten
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = torch.sigmoid(self.fc2(x))
-        return x
+        logits = self.model(x)
+        return torch.sigmoid(logits)
 
-def build_torch_model():
-    return BinaryClassifierCNN()
+def build_model(pretrained=True):
+    return TransferLearningClassifier(pretrained=pretrained)
